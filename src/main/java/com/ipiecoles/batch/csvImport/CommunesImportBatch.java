@@ -44,7 +44,7 @@ public class CommunesImportBatch {
     public EntityManagerFactory entityManagerFactory;
 
 
-    @Value("${communesImportBatch.chunksize}")
+    @Value("${importFile.chunksize}")
     private Integer chunksize;
 
     public Integer getChunksize() {
@@ -65,10 +65,10 @@ public class CommunesImportBatch {
     public CommuneCSVImportStepListener communeCSVImportStepListener() {
         return new CommuneCSVImportStepListener();
     }
-//    @Bean
-//    public CommuneCSVException communeCSVException(){
-//        return new CommuneCSVException();
-//    }
+    @Bean
+    public CommuneCSVException communeCSVException(){
+        return new CommuneCSVException("message");
+    }
 
     // MES STEPS
     @Bean
@@ -99,7 +99,7 @@ public class CommunesImportBatch {
     public Step stepGetMissingCoordinates(){
         FixedBackOffPolicy policy = new FixedBackOffPolicy();
         policy.setBackOffPeriod(2000);
-        return stepBuilderFactory.get("getMissingCoordiantes")
+        return stepBuilderFactory.get("getMissingCoordinates")
                 .<Commune, Commune> chunk(10)
                 .reader(communeMissingCoordinatesJpaItemReader())
                 .processor(communeMissingCoordinatesItemProcessor())
@@ -119,7 +119,7 @@ public class CommunesImportBatch {
     @Bean
     public JpaPagingItemReader<Commune> communeMissingCoordinatesJpaItemReader() {
         return new JpaPagingItemReaderBuilder<Commune>()
-                .name("communeMissingOrdinateJpaItemReader")
+                .name("communeMissingCoordinateJpaItemReader")
                 .entityManagerFactory(entityManagerFactory)
                 .pageSize(10)
                 .queryString("from Commune c where c.latitude is null or c.longitude is null")
@@ -162,9 +162,9 @@ public class CommunesImportBatch {
                 .skip(CommuneCSVException.class)
                 .skip(FlatFileParseException.class)
                 .listener(communesCSVImportSkipListener())
-//                .listener(communeCSVImportTestListener())
-//                .listener(communeCSVImportChunkListener())
-//                .listener(communeCSVItemReadListener())
+                .listener(communeCSVImportTestListener())
+                .listener(communeCSVImportChunkListener())
+                .listener(communeCSVItemReadListener())
                 .listener(communeCSVItemWriteListener())
                 .listener(communeCSVItemProcessor())
                 .build();
@@ -174,7 +174,8 @@ public class CommunesImportBatch {
     public FlatFileItemReader<CommuneDto> myCSVReader(){
         return new FlatFileItemReaderBuilder<CommuneDto>()
                 .name("myCSVReader").linesToSkip(1)
-                .resource(new ClassPathResource("laposte_hexasmal_test_skip.csv"))
+                //.resource(new ClassPathResource("laposte_hexasmal_test_skip.csv"))
+                .resource(new ClassPathResource("laposte_hexasmal_small.csv"))
                 .delimited().delimiter(";")
                 .names("codeInsee", "nomCommune", "codePostal", "ligne5", "libelleAcheminement", "coordonneesGPS")
                 .fieldSetMapper(new BeanWrapperFieldSetMapper<CommuneDto>(){{

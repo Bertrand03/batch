@@ -1,0 +1,25 @@
+# Création d'un batch d'export des communes dans un fichier plat
+
+Le but est de créer un batch lisant les communes en base de données et produisant un fichier tel que celui-ci (exemple avec 3 communes en base):
+
+```
+Total codes postaux : 2
+01300 - 01006 - Saint Ambleon : 45,74950 5,59432
+01300 - 01454 - Virignin : 45,72674 5,71282
+07460 - 07024 - Banne : 44,36078 4,15114
+Total communes : 3
+```
+
+Les communes présentées dans le fichier sont ordonnées par code postal, puis par code Insee et les coordonnées GPS n'ont que 5 chiffres
+significatifs après la virgule. Le nombre total de codes postaux est affiché dans le premier enregistrement et le nombre total de communes
+est inscrit en dernière ligne.
+
+
+## Quelques informations supplémentaires :
+- Une première step devra récupérer le nombre de codes postaux distincts (cf la méthode `countDistinctCodePostal` de `CommuneRepository` )
+et le nombre total de communes et mettre ces informations à disposition des prochaines steps.
+- La step d'écriture du fichier sera idéalement codée avec un `RepositoryItemReader` (exemple https://www.programmersought.com/article/71013801913/) à défaut un `JpaPagingItemReaderBuilder`.
+- Il est nécessaire d'utiliser un `FlatFileItemWriter` pour l'écriture du fichier plat (plus d'infos https://pjvilloud.github.io/cours-springbatch/#/springbatch-chunk-item-writer2)
+- Il faudra utiliser le principe des Header/Footer pour la première et la dernière ligne (plus d'infos https://docs.spring.io/spring-batch/docs/current/reference/html/common-patterns.html)
+- Pour le formattage des lignes des communes, uiliser un `FormatterLineAggregator` à la place du `DelimitedLineAggregator` du cours et spécifier le format `"%5s - %5s - %s : %.5f %.5f"`
+- Le fichier généré doit être placé dans le dossier `target` et s'appeler `test.txt`
